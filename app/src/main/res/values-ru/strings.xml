@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Каталог автозапчастей</string>
+    
+    <!-- Main -->
+    <string name="main_title">Каталог автозапчастей и аксессуаров</string>
+    <string name="add_part">Добавить запчасть</string>
+    <string name="settings">Настройки</string>
+    <string name="no_parts">Запчастей пока нет. Нажмите + чтобы добавить.</string>
+    
+    <!-- Detail -->
+    <string name="part_title">Название</string>
+    <string name="part_description">Описание</string>
+    <string name="part_date">Дата</string>
+    <string name="save">Сохранить</string>
+    <string name="delete">Удалить</string>
+    <string name="edit_part">Редактировать запчасть</string>
+    <string name="new_part">Новая запчасть</string>
+    
+    <!-- Settings -->
+    <string name="settings_title">Настройки</string>
+    <string name="language_settings">Язык</string>
+    <string name="lang_english">English</string>
+    <string name="lang_russian">Русский</string>
+    <string name="lang_system">Системный</string>
+    <string name="theme_settings">Тема</string>
+    <string name="theme_light">Светлая</string>
+    <string name="theme_dark">Тёмная</string>
+    <string name="theme_system">Системная</string>
+    
+    <!-- Splash -->
+    <string name="splash_loading">Загрузка…</string>
+    
+    <!-- Common -->
+    <string name="cancel">Отмена</string>
+    <string name="confirm">Подтвердить</string>
+    <string name="delete_confirm">Удалить эту запчасть?</string>
+</resources>
