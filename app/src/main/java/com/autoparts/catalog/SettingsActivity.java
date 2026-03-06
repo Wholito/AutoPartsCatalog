@@ -28,7 +28,6 @@ public class SettingsActivity extends BaseActivity {
         radioGroupTheme = findViewById(R.id.radio_group_theme);
         radioGroupLang = findViewById(R.id.radio_group_lang);
 
-        // Set listeners first, then initial selection (listener will fire but value unchanged = no recreate)
         radioGroupTheme.setOnCheckedChangeListener((group, checkedId) -> {
             int theme = themeFromId(checkedId);
             if (theme != themeHelper.getTheme()) {
@@ -45,7 +44,6 @@ public class SettingsActivity extends BaseActivity {
             }
         });
 
-        // Set initial selection
         radioGroupTheme.check(idFromTheme(themeHelper.getTheme()));
         radioGroupLang.check(idFromLang(localeHelper.getLanguage()));
     }
