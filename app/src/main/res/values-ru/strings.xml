@@ -7,6 +7,7 @@
     <string name="add_part">Добавить запчасть</string>
     <string name="settings">Настройки</string>
     <string name="no_parts">Запчастей пока нет. Нажмите + чтобы добавить.</string>
+    <string name="online_catalog_title">Курсы НБ РБ</string>
     
     <!-- Detail -->
     <string name="part_title">Название</string>
@@ -27,6 +28,12 @@
     <string name="theme_light">Светлая</string>
     <string name="theme_dark">Тёмная</string>
     <string name="theme_system">Системная</string>
+    <string name="refresh">Обновить</string>
+    <string name="api_empty">Данных из API пока нет.</string>
+    <string name="api_status_online">Онлайн: загружен каталог автозапчастей (цены BYN)</string>
+    <string name="api_status_cache">Ошибка сети: показан кэш</string>
+    <string name="api_status_offline">Оффлайн: показаны сохранённые курсы НБ РБ</string>
+    <string name="nbrb_cached_at">Кэш: %1$s</string>
     
     <!-- Splash -->
     <string name="splash_loading">Загрузка…</string>

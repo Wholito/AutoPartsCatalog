@@ -7,6 +7,7 @@
     <string name="add_part">Add Part</string>
     <string name="settings">Settings</string>
     <string name="no_parts">No parts yet. Tap + to add.</string>
+    <string name="online_catalog_title">NBRB exchange rates</string>
     
     <!-- Detail -->
     <string name="part_title">Title</string>
@@ -27,6 +28,12 @@
     <string name="theme_light">Light</string>
     <string name="theme_dark">Dark</string>
     <string name="theme_system">System default</string>
+    <string name="refresh">Refresh</string>
+    <string name="api_empty">No exchange rates in cache yet. Pull to refresh when online.</string>
+    <string name="api_status_online">Online: rates loaded from NBRB API</string>
+    <string name="api_status_cache">Network error: cached data shown</string>
+    <string name="api_status_offline">Offline: showing cached NBRB rates</string>
+    <string name="nbrb_cached_at">Cached: %1$s</string>
     
     <!-- Splash -->
     <string name="splash_loading">Loading…</string>
