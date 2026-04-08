@@ -12,9 +12,9 @@ import java.util.List;
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     private static final String DB_NAME = "parts_db";
-    private static final int DB_VERSION = 3;
+    private static final int DB_VERSION = 4;
     private static final String TABLE_PARTS = "parts";
-    /** Устаревшая таблица товаров API — удаляется при миграции на v3 */
+
     private static final String TABLE_API_PRODUCTS = "api_products";
     private static final String TABLE_NBRB_RATES = "nbrb_rates";
 
@@ -22,6 +22,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String COL_TITLE = "title";
     private static final String COL_DESCRIPTION = "description";
     private static final String COL_DATE = "date";
+    private static final String COL_CATEGORY = "category";
+    private static final String COL_IMAGE_URL = "image_url";
+    private static final String COL_REMOTE_ID = "remote_id";
 
     private static final String N_COL_CUR_ID = "cur_id";
     private static final String N_COL_ABBR = "abbr";
@@ -41,7 +44,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 COL_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
                 COL_TITLE + " TEXT NOT NULL, " +
                 COL_DESCRIPTION + " TEXT, " +
-                COL_DATE + " TEXT)");
+                COL_DATE + " TEXT, " +
+                COL_CATEGORY + " TEXT, " +
+                COL_IMAGE_URL + " TEXT, " +
+                COL_REMOTE_ID + " TEXT)");
         createNbrbRatesTable(db);
     }
 
@@ -60,6 +66,11 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             db.execSQL("DROP TABLE IF EXISTS " + TABLE_API_PRODUCTS);
             createNbrbRatesTable(db);
         }
+        if (oldVersion < 4) {
+            db.execSQL("ALTER TABLE " + TABLE_PARTS + " ADD COLUMN " + COL_CATEGORY + " TEXT");
+            db.execSQL("ALTER TABLE " + TABLE_PARTS + " ADD COLUMN " + COL_IMAGE_URL + " TEXT");
+            db.execSQL("ALTER TABLE " + TABLE_PARTS + " ADD COLUMN " + COL_REMOTE_ID + " TEXT");
+        }
     }
 
     public long insertPart(Part part) {
@@ -68,6 +79,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         cv.put(COL_TITLE, part.getTitle());
         cv.put(COL_DESCRIPTION, part.getDescription());
         cv.put(COL_DATE, part.getDate());
+        cv.put(COL_CATEGORY, part.getCategory());
+        cv.put(COL_IMAGE_URL, part.getImageUrl());
+        cv.put(COL_REMOTE_ID, emptyToNull(part.getRemoteId()));
         return db.insert(TABLE_PARTS, null, cv);
     }
 
@@ -78,6 +92,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         cv.put(COL_TITLE, part.getTitle());
         cv.put(COL_DESCRIPTION, part.getDescription());
         cv.put(COL_DATE, part.getDate());
+        cv.put(COL_CATEGORY, part.getCategory());
+        cv.put(COL_IMAGE_URL, part.getImageUrl());
+        cv.put(COL_REMOTE_ID, emptyToNull(part.getRemoteId()));
         return db.update(TABLE_PARTS, cv, COL_ID + " = ?",
                 new String[]{String.valueOf(part.getId())});
     }
@@ -100,6 +117,22 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return null;
     }
 
+    public Part getPartByRemoteId(String remoteId) {
+        if (remoteId == null || remoteId.isEmpty()) {
+            return null;
+        }
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor c = db.query(TABLE_PARTS, null, COL_REMOTE_ID + " = ?",
+                new String[]{remoteId}, null, null, null);
+        if (c.moveToFirst()) {
+            Part p = cursorToPart(c);
+            c.close();
+            return p;
+        }
+        c.close();
+        return null;
+    }
+
     public List<Part> getAllParts() {
         List<Part> list = new ArrayList<>();
         SQLiteDatabase db = getReadableDatabase();
@@ -111,13 +144,51 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return list;
     }
 
+    public List<String> getDistinctCategories() {
+        List<String> out = new ArrayList<>();
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor c = db.query(true, TABLE_PARTS, new String[]{COL_CATEGORY},
+                COL_CATEGORY + " IS NOT NULL AND " + COL_CATEGORY + " != ''",
+                null, null, null, COL_CATEGORY + " ASC", null);
+        while (c.moveToNext()) {
+            String cat = c.getString(0);
+            if (cat != null) {
+                String t = cat.trim();
+                if (!t.isEmpty() && !out.contains(t)) {
+                    out.add(t);
+                }
+            }
+        }
+        c.close();
+        return out;
+    }
+
+    public void updatePartRemoteId(long localId, String remoteId) {
+        SQLiteDatabase db = getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put(COL_REMOTE_ID, emptyToNull(remoteId));
+        db.update(TABLE_PARTS, cv, COL_ID + " = ?", new String[]{String.valueOf(localId)});
+    }
+
+    private static String emptyToNull(String s) {
+        return (s == null || s.isEmpty()) ? null : s;
+    }
+
     private Part cursorToPart(Cursor c) {
+        String remote = c.getString(c.getColumnIndexOrThrow(COL_REMOTE_ID));
         return new Part(
                 c.getLong(c.getColumnIndexOrThrow(COL_ID)),
                 c.getString(c.getColumnIndexOrThrow(COL_TITLE)),
                 c.getString(c.getColumnIndexOrThrow(COL_DESCRIPTION)),
-                c.getString(c.getColumnIndexOrThrow(COL_DATE))
+                c.getString(c.getColumnIndexOrThrow(COL_DATE)),
+                nullToEmpty(c.getString(c.getColumnIndexOrThrow(COL_CATEGORY))),
+                nullToEmpty(c.getString(c.getColumnIndexOrThrow(COL_IMAGE_URL))),
+                remote != null ? remote : ""
         );
+    }
+
+    private static String nullToEmpty(String s) {
+        return s != null ? s : "";
     }
 
     private void createNbrbRatesTable(SQLiteDatabase db) {

@@ -15,7 +15,7 @@ public class NbrbRateResponse {
     private String name;
     @SerializedName("Cur_OfficialRate")
     private double officialRate;
-    /** Время сохранения в локальную БД (не из JSON). */
+
     private String cachedAt;
 
     public int getCurId() {

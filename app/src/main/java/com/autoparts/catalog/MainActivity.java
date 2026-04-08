@@ -2,15 +2,24 @@ package com.autoparts.catalog;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.Spinner;
 import android.widget.TextView;
+
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.textfield.TextInputEditText;
+
+import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends BaseActivity {
@@ -19,6 +28,44 @@ public class MainActivity extends BaseActivity {
     private TextView emptyView;
     private PartAdapter adapter;
     private DatabaseHelper db;
+    private final List<Part> allParts = new ArrayList<>();
+    private TextInputEditText editSearch;
+    private TextInputEditText editDateFrom;
+    private TextInputEditText editDateTo;
+    private Spinner spinnerSort;
+    private Spinner spinnerCategory;
+    private String selectedCategory = "";
+
+    private final TextWatcher filterWatcher = new TextWatcher() {
+        @Override
+        public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+        }
+
+        @Override
+        public void onTextChanged(CharSequence s, int start, int before, int count) {
+            applyFilters();
+        }
+
+        @Override
+        public void afterTextChanged(Editable s) {
+        }
+    };
+
+    private final AdapterView.OnItemSelectedListener categoryListener = new AdapterView.OnItemSelectedListener() {
+        @Override
+        public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+            if (position == 0) {
+                selectedCategory = "";
+            } else {
+                selectedCategory = String.valueOf(parent.getItemAtPosition(position));
+            }
+            applyFilters();
+        }
+
+        @Override
+        public void onNothingSelected(AdapterView<?> parent) {
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,10 +78,32 @@ public class MainActivity extends BaseActivity {
         db = new DatabaseHelper(this);
         recycler = findViewById(R.id.recycler);
         emptyView = findViewById(R.id.empty_view);
+        editSearch = findViewById(R.id.edit_search);
+        editDateFrom = findViewById(R.id.edit_date_from);
+        editDateTo = findViewById(R.id.edit_date_to);
+        spinnerSort = findViewById(R.id.spinner_sort);
+        spinnerCategory = findViewById(R.id.spinner_category);
+
         recycler.setLayoutManager(new LinearLayoutManager(this));
         adapter = new PartAdapter();
         adapter.setOnPartClickListener(p -> openPart(p.getId()));
         recycler.setAdapter(adapter);
+
+        setupSortSpinner();
+        spinnerSort.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                applyFilters();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
+
+        editSearch.addTextChangedListener(filterWatcher);
+        editDateFrom.addTextChangedListener(filterWatcher);
+        editDateTo.addTextChangedListener(filterWatcher);
 
         FloatingActionButton fab = findViewById(R.id.fab_add);
         fab.setOnClickListener(v -> openPart(-1));
@@ -48,10 +117,84 @@ public class MainActivity extends BaseActivity {
         loadParts();
     }
 
+    private void setupSortSpinner() {
+        String[] labels = new String[]{
+                getString(R.string.sort_id_desc),
+                getString(R.string.sort_date_desc),
+                getString(R.string.sort_date_asc),
+                getString(R.string.sort_title_asc)
+        };
+        ArrayAdapter<String> ad = new ArrayAdapter<>(
+                this, android.R.layout.simple_spinner_dropdown_item, labels);
+        spinnerSort.setAdapter(ad);
+    }
+
+    private void refreshCategorySpinner() {
+        List<String> cats = db.getDistinctCategories();
+        List<String> items = new ArrayList<>();
+        items.add(getString(R.string.filter_category_all));
+        items.addAll(cats);
+        ArrayAdapter<String> ad = new ArrayAdapter<>(
+                this, android.R.layout.simple_spinner_dropdown_item, items);
+        spinnerCategory.setAdapter(ad);
+
+        int sel = 0;
+        if (!selectedCategory.isEmpty()) {
+            for (int i = 1; i < items.size(); i++) {
+                if (items.get(i).equalsIgnoreCase(selectedCategory)) {
+                    sel = i;
+                    break;
+                }
+            }
+        }
+        spinnerCategory.setOnItemSelectedListener(null);
+        spinnerCategory.setSelection(sel, false);
+        spinnerCategory.setOnItemSelectedListener(categoryListener);
+    }
+
     private void loadParts() {
-        List<Part> parts = db.getAllParts();
-        adapter.setItems(parts);
-        emptyView.setVisibility(parts.isEmpty() ? View.VISIBLE : View.GONE);
+        allParts.clear();
+        allParts.addAll(db.getAllParts());
+        refreshCategorySpinner();
+        applyFilters();
+    }
+
+    private void applyFilters() {
+        String q = textOf(editSearch);
+        String df = textOf(editDateFrom);
+        String dt = textOf(editDateTo);
+        PartQueryEngine.Sort sort = sortFromPosition(spinnerSort.getSelectedItemPosition());
+        List<Part> filtered = PartQueryEngine.apply(allParts, q, selectedCategory, df, dt, sort);
+        adapter.setItems(filtered);
+        if (filtered.isEmpty()) {
+            emptyView.setVisibility(View.VISIBLE);
+            emptyView.setText(allParts.isEmpty()
+                    ? getString(R.string.no_parts)
+                    : getString(R.string.no_matches));
+        } else {
+            emptyView.setVisibility(View.GONE);
+        }
+    }
+
+    private static String textOf(TextInputEditText e) {
+        if (e == null || e.getText() == null) {
+            return "";
+        }
+        return e.getText().toString();
+    }
+
+    private static PartQueryEngine.Sort sortFromPosition(int pos) {
+        switch (pos) {
+            case 1:
+                return PartQueryEngine.Sort.DATE_DESC;
+            case 2:
+                return PartQueryEngine.Sort.DATE_ASC;
+            case 3:
+                return PartQueryEngine.Sort.TITLE_ASC;
+            case 0:
+            default:
+                return PartQueryEngine.Sort.ID_DESC;
+        }
     }
 
     @Override

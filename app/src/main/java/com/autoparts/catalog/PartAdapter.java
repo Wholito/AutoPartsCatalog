@@ -3,9 +3,13 @@ package com.autoparts.catalog;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
+
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.bumptech.glide.Glide;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,8 +48,32 @@ public class PartAdapter extends RecyclerView.Adapter<PartAdapter.ViewHolder> {
         holder.title.setText(Objects.requireNonNullElse(p.getTitle(), ""));
         holder.description.setText(Objects.requireNonNullElse(p.getDescription(), ""));
         holder.date.setText(Objects.requireNonNullElse(p.getDate(), ""));
+
+        String cat = p.getCategory();
+        if (cat != null && !cat.trim().isEmpty()) {
+            holder.category.setVisibility(View.VISIBLE);
+            holder.category.setText(cat.trim());
+        } else {
+            holder.category.setVisibility(View.GONE);
+        }
+
+        String url = p.getImageUrl();
+        if (url != null && !url.trim().isEmpty()) {
+            holder.image.setVisibility(View.VISIBLE);
+            Glide.with(holder.image)
+                    .load(url.trim())
+                    .centerCrop()
+                    .placeholder(android.R.drawable.ic_menu_gallery)
+                    .into(holder.image);
+        } else {
+            holder.image.setVisibility(View.GONE);
+            holder.image.setImageDrawable(null);
+        }
+
         holder.itemView.setOnClickListener(v -> {
-            if (listener != null) listener.onPartClick(p);
+            if (listener != null) {
+                listener.onPartClick(p);
+            }
         });
     }
 
@@ -55,13 +83,19 @@ public class PartAdapter extends RecyclerView.Adapter<PartAdapter.ViewHolder> {
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
-        final TextView title, description, date;
+        final TextView title;
+        final TextView category;
+        final TextView description;
+        final TextView date;
+        final ImageView image;
 
         ViewHolder(View itemView) {
             super(itemView);
             title = itemView.findViewById(R.id.item_title);
+            category = itemView.findViewById(R.id.item_category);
             description = itemView.findViewById(R.id.item_description);
             date = itemView.findViewById(R.id.item_date);
+            image = itemView.findViewById(R.id.item_image);
         }
     }
 }

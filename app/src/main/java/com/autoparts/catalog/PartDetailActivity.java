@@ -1,11 +1,12 @@
 package com.autoparts.catalog;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.widget.EditText;
 import android.widget.Toast;
+
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.Toolbar;
+
 import com.google.android.material.button.MaterialButton;
 
 import java.text.SimpleDateFormat;
@@ -16,8 +17,13 @@ public class PartDetailActivity extends BaseActivity {
 
     public static final String EXTRA_PART_ID = "part_id";
 
-    private EditText editTitle, editDescription, editDate;
-    private MaterialButton btnSave, btnDelete;
+    private EditText editTitle;
+    private EditText editDescription;
+    private EditText editDate;
+    private EditText editCategory;
+    private EditText editImageUrl;
+    private MaterialButton btnSave;
+    private MaterialButton btnDelete;
     private DatabaseHelper db;
     private long partId = -1;
     private boolean isNew;
@@ -45,6 +51,8 @@ public class PartDetailActivity extends BaseActivity {
         editTitle = findViewById(R.id.edit_title);
         editDescription = findViewById(R.id.edit_description);
         editDate = findViewById(R.id.edit_date);
+        editCategory = findViewById(R.id.edit_category);
+        editImageUrl = findViewById(R.id.edit_image_url);
         btnSave = findViewById(R.id.btn_save);
         btnDelete = findViewById(R.id.btn_delete);
 
@@ -65,6 +73,8 @@ public class PartDetailActivity extends BaseActivity {
             editTitle.setText(p.getTitle());
             editDescription.setText(p.getDescription());
             editDate.setText(p.getDate());
+            editCategory.setText(p.getCategory());
+            editImageUrl.setText(p.getImageUrl());
         }
     }
 
@@ -72,18 +82,24 @@ public class PartDetailActivity extends BaseActivity {
         String title = editTitle.getText().toString().trim();
         String desc = editDescription.getText().toString().trim();
         String date = editDate.getText().toString().trim();
+        String category = editCategory.getText().toString().trim();
+        String imageUrl = editImageUrl.getText().toString().trim();
 
         if (title.isEmpty()) {
             Toast.makeText(this, R.string.part_title, Toast.LENGTH_SHORT).show();
             return;
         }
 
-        Part part = new Part(title, desc, date);
         if (isNew) {
+            Part part = new Part(title, desc, date);
+            part.setCategory(category);
+            part.setImageUrl(imageUrl);
             db.insertPart(part);
             Toast.makeText(this, R.string.save, Toast.LENGTH_SHORT).show();
         } else {
-            part.setId(partId);
+            Part existing = db.getPart(partId);
+            String remote = existing != null ? existing.getRemoteId() : "";
+            Part part = new Part(partId, title, desc, date, category, imageUrl, remote);
             db.updatePart(part);
             Toast.makeText(this, R.string.save, Toast.LENGTH_SHORT).show();
         }
