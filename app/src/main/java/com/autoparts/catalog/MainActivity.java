@@ -18,6 +18,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.firebase.auth.FirebaseAuth;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,6 +36,8 @@ public class MainActivity extends BaseActivity {
     private Spinner spinnerSort;
     private Spinner spinnerCategory;
     private String selectedCategory = "";
+
+    private final FirestorePartsRealtime firestoreRealtime = new FirestorePartsRealtime();
 
     private final TextWatcher filterWatcher = new TextWatcher() {
         @Override
@@ -70,6 +73,11 @@ public class MainActivity extends BaseActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if (FirebaseAuth.getInstance().getCurrentUser() == null) {
+            startActivity(new Intent(this, AuthActivity.class));
+            finish();
+            return;
+        }
         setContentView(R.layout.activity_main);
 
         Toolbar toolbar = findViewById(R.id.toolbar);
@@ -87,6 +95,7 @@ public class MainActivity extends BaseActivity {
         recycler.setLayoutManager(new LinearLayoutManager(this));
         adapter = new PartAdapter();
         adapter.setOnPartClickListener(p -> openPart(p.getId()));
+        adapter.setOnPartLongClickListener(this::sharePart);
         recycler.setAdapter(adapter);
 
         setupSortSpinner();
@@ -109,6 +118,20 @@ public class MainActivity extends BaseActivity {
         fab.setOnClickListener(v -> openPart(-1));
 
         loadParts();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        if (FirebaseAuth.getInstance().getCurrentUser() != null) {
+            firestoreRealtime.start(this, db, this::loadParts);
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        firestoreRealtime.stop();
+        super.onStop();
     }
 
     @Override
@@ -174,6 +197,18 @@ public class MainActivity extends BaseActivity {
         } else {
             emptyView.setVisibility(View.GONE);
         }
+    }
+
+    private void sharePart(Part p) {
+        String text = p.shareSummary();
+        if (text == null || text.trim().isEmpty()) {
+            text = p.getTitle() != null ? p.getTitle() : "";
+        }
+        Intent send = new Intent(Intent.ACTION_SEND);
+        send.setType("text/plain");
+        send.putExtra(Intent.EXTRA_SUBJECT, p.getTitle());
+        send.putExtra(Intent.EXTRA_TEXT, text);
+        startActivity(Intent.createChooser(send, getString(R.string.share_part)));
     }
 
     private static String textOf(TextInputEditText e) {

@@ -1,6 +1,7 @@
 package com.autoparts.catalog;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -17,6 +18,8 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 import com.google.android.material.timepicker.MaterialTimePicker;
 import com.google.android.material.timepicker.TimeFormat;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 import java.util.Locale;
 
@@ -33,6 +36,8 @@ public class SettingsActivity extends BaseActivity {
     private MaterialButton btnPickTime;
     private MaterialButton btnSyncUp;
     private MaterialButton btnSyncDown;
+    private TextView textAccount;
+    private MaterialButton btnSignOut;
     private boolean muteReminderListener;
 
     @Override
@@ -56,6 +61,8 @@ public class SettingsActivity extends BaseActivity {
         btnPickTime = findViewById(R.id.btn_pick_time);
         btnSyncUp = findViewById(R.id.btn_sync_up);
         btnSyncDown = findViewById(R.id.btn_sync_down);
+        textAccount = findViewById(R.id.text_account);
+        btnSignOut = findViewById(R.id.btn_sign_out);
 
         radioGroupTheme.setOnCheckedChangeListener((group, checkedId) -> {
             int theme = themeFromId(checkedId);
@@ -109,34 +116,73 @@ public class SettingsActivity extends BaseActivity {
         });
 
         btnPickTime.setOnClickListener(v -> showTimePicker());
-        btnSyncUp.setOnClickListener(v -> FirestoreSyncHelper.syncUp(
-                this,
-                new DatabaseHelper(this),
-                new FirestoreSyncHelper.Callback() {
-                    @Override
-                    public void onDone(String message) {
-                        Toast.makeText(SettingsActivity.this, message, Toast.LENGTH_SHORT).show();
-                    }
+        btnSyncUp.setOnClickListener(v -> {
+            if (FirebaseAuth.getInstance().getCurrentUser() == null) {
+                Toast.makeText(this, R.string.auth_required_for_cloud, Toast.LENGTH_SHORT).show();
+                return;
+            }
+            FirestoreSyncHelper.syncUp(
+                    this,
+                    new DatabaseHelper(this),
+                    new FirestoreSyncHelper.Callback() {
+                        @Override
+                        public void onDone(String message) {
+                            Toast.makeText(SettingsActivity.this, message, Toast.LENGTH_SHORT).show();
+                        }
 
-                    @Override
-                    public void onError(String message) {
-                        Toast.makeText(SettingsActivity.this, message, Toast.LENGTH_LONG).show();
-                    }
-                }));
-        btnSyncDown.setOnClickListener(v -> FirestoreSyncHelper.syncDown(
-                this,
-                new DatabaseHelper(this),
-                new FirestoreSyncHelper.Callback() {
-                    @Override
-                    public void onDone(String message) {
-                        Toast.makeText(SettingsActivity.this, message, Toast.LENGTH_SHORT).show();
-                    }
+                        @Override
+                        public void onError(String message) {
+                            Toast.makeText(SettingsActivity.this, message, Toast.LENGTH_LONG).show();
+                        }
+                    });
+        });
+        btnSyncDown.setOnClickListener(v -> {
+            if (FirebaseAuth.getInstance().getCurrentUser() == null) {
+                Toast.makeText(this, R.string.auth_required_for_cloud, Toast.LENGTH_SHORT).show();
+                return;
+            }
+            FirestoreSyncHelper.syncDown(
+                    this,
+                    new DatabaseHelper(this),
+                    new FirestoreSyncHelper.Callback() {
+                        @Override
+                        public void onDone(String message) {
+                            Toast.makeText(SettingsActivity.this, message, Toast.LENGTH_SHORT).show();
+                        }
 
-                    @Override
-                    public void onError(String message) {
-                        Toast.makeText(SettingsActivity.this, message, Toast.LENGTH_LONG).show();
-                    }
-                }));
+                        @Override
+                        public void onError(String message) {
+                            Toast.makeText(SettingsActivity.this, message, Toast.LENGTH_LONG).show();
+                        }
+                    });
+        });
+
+        btnSignOut.setOnClickListener(v -> {
+            FirebaseAuth.getInstance().signOut();
+            Intent i = new Intent(this, AuthActivity.class);
+            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(i);
+            finish();
+        });
+
+        updateAccountSummary();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        updateAccountSummary();
+    }
+
+    private void updateAccountSummary() {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user != null && user.getEmail() != null && !user.getEmail().isEmpty()) {
+            textAccount.setText(getString(R.string.auth_signed_as, user.getEmail()));
+            btnSignOut.setEnabled(true);
+        } else {
+            textAccount.setText(R.string.auth_not_signed_in);
+            btnSignOut.setEnabled(false);
+        }
     }
 
     @Override

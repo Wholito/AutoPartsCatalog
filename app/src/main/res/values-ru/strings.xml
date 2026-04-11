@@ -75,4 +75,23 @@
     <string name="firestore_sync_no_local_data">Нет локальных записей для выгрузки.</string>
     <string name="firestore_not_configured">Облако не настроено. Замените app/google-services.json на файл из Firebase.</string>
     <string name="firestore_permission_denied">PERMISSION_DENIED: проверьте Rules Firestore и настройки Firebase проекта.</string>
+    <string name="auth_required_for_cloud">Войдите в аккаунт для работы с облаком.</string>
+
+    <string name="auth_title">Вход</string>
+    <string name="auth_email">Электронная почта</string>
+    <string name="auth_password">Пароль</string>
+    <string name="auth_login">Войти</string>
+    <string name="auth_register">Регистрация</string>
+    <string name="auth_fill_fields">Введите email и пароль</string>
+    <string name="auth_password_hint">Пароль не короче 6 символов</string>
+    <string name="auth_error">Ошибка входа: %1$s</string>
+    <string name="auth_account_section">Аккаунт</string>
+    <string name="auth_signed_as">Вошли как %1$s</string>
+    <string name="auth_not_signed_in">Не выполнен вход</string>
+    <string name="auth_sign_out">Выйти</string>
+
+    <string name="part_take_photo">Снять фото</string>
+    <string name="camera_error">Не удалось подготовить файл для камеры</string>
+
+    <string name="share_part">Поделиться запчастью</string>
 </resources>

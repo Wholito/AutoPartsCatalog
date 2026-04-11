@@ -12,7 +12,7 @@ import java.util.List;
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     private static final String DB_NAME = "parts_db";
-    private static final int DB_VERSION = 4;
+    private static final int DB_VERSION = 6;
     private static final String TABLE_PARTS = "parts";
 
     private static final String TABLE_API_PRODUCTS = "api_products";
@@ -71,6 +71,11 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             db.execSQL("ALTER TABLE " + TABLE_PARTS + " ADD COLUMN " + COL_IMAGE_URL + " TEXT");
             db.execSQL("ALTER TABLE " + TABLE_PARTS + " ADD COLUMN " + COL_REMOTE_ID + " TEXT");
         }
+        if (oldVersion < 5) {
+            db.execSQL("ALTER TABLE " + TABLE_PARTS + " ADD COLUMN latitude REAL");
+            db.execSQL("ALTER TABLE " + TABLE_PARTS + " ADD COLUMN longitude REAL");
+        }
+        // v6: координаты в приложении не используются; старые колонки latitude/longitude могут остаться в БД
     }
 
     public long insertPart(Part part) {
@@ -102,6 +107,14 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public int deletePart(long id) {
         SQLiteDatabase db = getWritableDatabase();
         return db.delete(TABLE_PARTS, COL_ID + " = ?", new String[]{String.valueOf(id)});
+    }
+
+    public int deletePartByRemoteId(String remoteId) {
+        if (remoteId == null || remoteId.isEmpty()) {
+            return 0;
+        }
+        SQLiteDatabase db = getWritableDatabase();
+        return db.delete(TABLE_PARTS, COL_REMOTE_ID + " = ?", new String[]{remoteId});
     }
 
     public Part getPart(long id) {

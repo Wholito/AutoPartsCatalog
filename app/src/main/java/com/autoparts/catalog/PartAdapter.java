@@ -1,5 +1,6 @@
 package com.autoparts.catalog;
 
+import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,13 +20,22 @@ public class PartAdapter extends RecyclerView.Adapter<PartAdapter.ViewHolder> {
 
     private final List<Part> items = new ArrayList<>();
     private OnPartClickListener listener;
+    private OnPartLongClickListener longClickListener;
 
     public interface OnPartClickListener {
         void onPartClick(Part part);
     }
 
+    public interface OnPartLongClickListener {
+        void onPartLongClick(Part part);
+    }
+
     public void setOnPartClickListener(OnPartClickListener listener) {
         this.listener = listener;
+    }
+
+    public void setOnPartLongClickListener(OnPartLongClickListener listener) {
+        this.longClickListener = listener;
     }
 
     public void setItems(List<Part> parts) {
@@ -60,8 +70,10 @@ public class PartAdapter extends RecyclerView.Adapter<PartAdapter.ViewHolder> {
         String url = p.getImageUrl();
         if (url != null && !url.trim().isEmpty()) {
             holder.image.setVisibility(View.VISIBLE);
+            String u = url.trim();
+            Object load = u.startsWith("content:") || u.startsWith("file:") ? Uri.parse(u) : u;
             Glide.with(holder.image)
-                    .load(url.trim())
+                    .load(load)
                     .centerCrop()
                     .placeholder(android.R.drawable.ic_menu_gallery)
                     .into(holder.image);
@@ -74,6 +86,13 @@ public class PartAdapter extends RecyclerView.Adapter<PartAdapter.ViewHolder> {
             if (listener != null) {
                 listener.onPartClick(p);
             }
+        });
+        holder.itemView.setOnLongClickListener(v -> {
+            if (longClickListener != null) {
+                longClickListener.onPartLongClick(p);
+                return true;
+            }
+            return false;
         });
     }
 

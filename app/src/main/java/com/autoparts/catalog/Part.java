@@ -84,8 +84,33 @@ public class Part {
         this.remoteId = remoteId != null ? remoteId : "";
     }
 
-    /** Текст для нечёткого поиска по ключевым словам */
     public String searchableText() {
         return (title + " " + description + " " + category).toLowerCase();
+    }
+
+    public String shareSummary() {
+        StringBuilder sb = new StringBuilder();
+        if (title != null && !title.isEmpty()) {
+            sb.append(title);
+        }
+        if (category != null && !category.trim().isEmpty()) {
+            if (sb.length() > 0) {
+                sb.append(" — ");
+            }
+            sb.append(category.trim());
+        }
+        if (date != null && !date.isEmpty()) {
+            if (sb.length() > 0) {
+                sb.append("\n");
+            }
+            sb.append(date);
+        }
+        if (description != null && !description.trim().isEmpty()) {
+            if (sb.length() > 0) {
+                sb.append("\n");
+            }
+            sb.append(description.trim());
+        }
+        return sb.length() > 0 ? sb.toString() : "";
     }
 }
